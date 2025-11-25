@@ -113,6 +113,46 @@ namespace UniversityContoso.Controllers
 
             return studente;
         }
+
+        // =====================================================
+        // POST: api/studente/{studenteId}/enroll/{corsoId}
+        // Iscrive lo studente al corso (crea un Enrollment)
+        // =====================================================
+        [HttpPost("{studenteId}/enroll/{corsoId}")]
+        public async Task<IActionResult> EnrollStudentToCourse(int studenteId, int corsoId)
+        {
+            // 1) Verifica che lo studente esista
+            var studente = await _context.Studenti.FindAsync(studenteId);
+            if (studente == null)
+                return NotFound($"Studente con ID {studenteId} non trovato.");
+
+            // 2) Verifica che il corso esista
+            var corso = await _context.Corsi.FindAsync(corsoId);
+            if (corso == null)
+                return NotFound($"Corso con ID {corsoId} non trovato.");
+
+            // 3) Verifica che l'enrollment non esista già (evitiamo duplicati)
+            var already = await _context.Enrollments
+                .AnyAsync(e => e.StudenteID == studenteId && e.CorsoID == corsoId);
+            if (already)
+                return Conflict("Lo studente è già iscritto a questo corso.");
+
+            // 4) Crea l'enrollment e salva
+            var enrollment = new Enrollment
+            {
+                StudenteID = studenteId,
+                CorsoID = corsoId
+                // se in futuro aggiungi altri campi (es. DateIscrizione), impostali qui
+            };
+
+            _context.Enrollments.Add(enrollment);
+            await _context.SaveChangesAsync();
+
+            // 5) Ritorna 201 Created con l'enrollment
+            // Nota: "Enrollment" è il nome del controller con il GetById (assumendo sia "EnrollmentController")
+            return CreatedAtAction("GetById", "Enrollment", new { id = enrollment.EnrollmentID }, enrollment);
+        }
+
     }
 
     // DTO per la richiesta di login
@@ -121,4 +161,6 @@ namespace UniversityContoso.Controllers
         public string Email { get; set; } = string.Empty;
         public string Password { get; set; } = string.Empty;
     }
+
+
 }
