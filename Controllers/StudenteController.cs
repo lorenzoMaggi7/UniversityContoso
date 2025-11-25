@@ -40,7 +40,7 @@ namespace UniversityContoso.Controllers
 
         // ===========================
         // POST: api/studente
-        // Crea un nuovo studente (Email e Password incluse)
+        // Crea un nuovo studente
         // ===========================
         [HttpPost]
         public async Task<ActionResult<Studente>> CreateStudente(Studente studente)
