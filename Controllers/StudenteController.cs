@@ -16,18 +16,20 @@ namespace UniversityContoso.Controllers
             _context = context;
         }
 
-        // ===========================
+        // =====================================================
         // GET: api/studente
-        // ===========================
+        // Ritorna la lista di tutti gli studenti
+        // =====================================================
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Studente>>> GetStudenti()
         {
             return await _context.Studenti.ToListAsync();
         }
 
-        // ===========================
-        // GET: api/studente/5
-        // ===========================
+        // =====================================================
+        // GET: api/studente/{id}
+        // Ritorna uno studente specifico tramite ID
+        // =====================================================
         [HttpGet("{id}")]
         public async Task<ActionResult<Studente>> GetStudente(int id)
         {
@@ -39,9 +41,10 @@ namespace UniversityContoso.Controllers
             return studente;
         }
 
-        // ===========================
+        // =====================================================
         // POST: api/studente
-        // ===========================
+        // Crea un nuovo studente (Email e Password incluse)
+        // =====================================================
         [HttpPost]
         public async Task<ActionResult<Studente>> CreateStudente(Studente studente)
         {
@@ -51,9 +54,10 @@ namespace UniversityContoso.Controllers
             return CreatedAtAction(nameof(GetStudente), new { id = studente.ID }, studente);
         }
 
-        // ===========================
-        // PUT: api/studente/5
-        // ===========================
+        // =====================================================
+        // PUT: api/studente/{id}
+        // Aggiorna uno studente esistente (incluso Email e Password)
+        // =====================================================
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateStudente(int id, Studente studente)
         {
@@ -77,9 +81,10 @@ namespace UniversityContoso.Controllers
             return NoContent();
         }
 
-        // ===========================
-        // DELETE: api/studente/5
-        // ===========================
+        // =====================================================
+        // DELETE: api/studente/{id}
+        // Cancella uno studente
+        // =====================================================
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteStudente(int id)
         {
@@ -93,26 +98,27 @@ namespace UniversityContoso.Controllers
             return NoContent();
         }
 
-        // ===========================
+        // =====================================================
         // POST: api/studente/login
-        // ===========================
+        // Login tramite Email + Password
+        // =====================================================
         [HttpPost("login")]
         public async Task<ActionResult<Studente>> Login([FromBody] LoginRequest login)
         {
             var studente = await _context.Studenti
-                .FirstOrDefaultAsync(s => s.Nome == login.Nome && s.Password == login.Password);
+                .FirstOrDefaultAsync(s => s.Email == login.Email && s.Password == login.Password);
 
             if (studente == null)
-                return Unauthorized("Nome o password errati.");
+                return Unauthorized("Email o password errati.");
 
             return studente;
         }
     }
 
-    // DTO per login
+    // DTO per la richiesta di login
     public class LoginRequest
     {
-        public string Nome { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
         public string Password { get; set; } = string.Empty;
     }
 }

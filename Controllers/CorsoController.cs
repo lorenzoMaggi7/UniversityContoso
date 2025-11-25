@@ -16,12 +16,22 @@ namespace UniversityContoso.Controllers
             _context = context;
         }
 
+        // ---------------------------------------------------------------
+        // GET: api/Corso
+        // Restituisce la lista completa di tutti i corsi presenti nel DB.
+        // Usa AsNoTracking() perché qui non serve il tracking delle entità.
+        // ---------------------------------------------------------------
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Corso>>> GetAll()
         {
             return await _context.Corsi.AsNoTracking().ToListAsync();
         }
 
+        // ---------------------------------------------------------------
+        // GET: api/Corso/{id}
+        // Cerca un corso tramite il suo ID.
+        // Se non lo trova restituisce 404 (NotFound).
+        // ---------------------------------------------------------------
         [HttpGet("{id}")]
         public async Task<ActionResult<Corso>> GetById(int id)
         {
@@ -30,14 +40,28 @@ namespace UniversityContoso.Controllers
             return c;
         }
 
+        // ---------------------------------------------------------------
+        // POST: api/Corso
+        // Crea un nuovo corso.
+        // Dopo aver salvato nel DB, ritorna 201 (Created)
+        // e include l’URL dell'oggetto appena creato.
+        // ---------------------------------------------------------------
         [HttpPost]
         public async Task<ActionResult<Corso>> Create(Corso c)
         {
             _context.Corsi.Add(c);
             await _context.SaveChangesAsync();
+
             return CreatedAtAction(nameof(GetById), new { id = c.CorsoID }, c);
         }
 
+        // ---------------------------------------------------------------
+        // PUT: api/Corso/{id}
+        // Aggiorna un corso esistente.
+        // Verifica che l’ID nell’URL corrisponda a quello del body.
+        // Se ok, EF Core aggiorna e salva.
+        // Restituisce 204 (NoContent) perché non torna un oggetto.
+        // ---------------------------------------------------------------
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, Corso c)
         {
@@ -45,9 +69,16 @@ namespace UniversityContoso.Controllers
 
             _context.Entry(c).State = EntityState.Modified;
             await _context.SaveChangesAsync();
+
             return NoContent();
         }
 
+        // ---------------------------------------------------------------
+        // DELETE: api/Corso/{id}
+        // Elimina un corso tramite il suo ID.
+        // Se il corso non esiste, restituisce 404.
+        // Se esiste lo elimina e salva, restituendo 204 (NoContent).
+        // ---------------------------------------------------------------
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
@@ -56,6 +87,7 @@ namespace UniversityContoso.Controllers
 
             _context.Corsi.Remove(c);
             await _context.SaveChangesAsync();
+
             return NoContent();
         }
     }
