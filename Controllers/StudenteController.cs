@@ -16,53 +16,48 @@ namespace UniversityContoso.Controllers
             _context = context;
         }
 
-        // =====================================================
+        // ===========================
         // GET: api/studente
-        // Ritorna la lista di tutti gli studenti
-        // =====================================================
+        // Lista tutti gli studenti
+        // ===========================
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Studente>>> GetStudenti()
         {
-            return await _context.Studenti.ToListAsync();
+            return await _context.Studenti.AsNoTracking().ToListAsync();
         }
 
-        // =====================================================
+        // ===========================
         // GET: api/studente/{id}
         // Ritorna uno studente specifico tramite ID
-        // =====================================================
+        // ===========================
         [HttpGet("{id}")]
         public async Task<ActionResult<Studente>> GetStudente(int id)
         {
             var studente = await _context.Studenti.FindAsync(id);
-
-            if (studente == null)
-                return NotFound();
-
+            if (studente == null) return NotFound();
             return studente;
         }
 
-        // =====================================================
+        // ===========================
         // POST: api/studente
         // Crea un nuovo studente (Email e Password incluse)
-        // =====================================================
+        // ===========================
         [HttpPost]
         public async Task<ActionResult<Studente>> CreateStudente(Studente studente)
         {
             _context.Studenti.Add(studente);
             await _context.SaveChangesAsync();
-
             return CreatedAtAction(nameof(GetStudente), new { id = studente.ID }, studente);
         }
 
-        // =====================================================
+        // ===========================
         // PUT: api/studente/{id}
-        // Aggiorna uno studente esistente (incluso Email e Password)
-        // =====================================================
+        // Aggiorna uno studente esistente
+        // ===========================
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateStudente(int id, Studente studente)
         {
-            if (id != studente.ID)
-                return BadRequest();
+            if (id != studente.ID) return BadRequest();
 
             _context.Entry(studente).State = EntityState.Modified;
 
@@ -72,25 +67,22 @@ namespace UniversityContoso.Controllers
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!_context.Studenti.Any(e => e.ID == id))
-                    return NotFound();
-                else
-                    throw;
+                if (!_context.Studenti.Any(e => e.ID == id)) return NotFound();
+                else throw;
             }
 
             return NoContent();
         }
 
-        // =====================================================
+        // ===========================
         // DELETE: api/studente/{id}
         // Cancella uno studente
-        // =====================================================
+        // ===========================
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteStudente(int id)
         {
             var studente = await _context.Studenti.FindAsync(id);
-            if (studente == null)
-                return NotFound();
+            if (studente == null) return NotFound();
 
             _context.Studenti.Remove(studente);
             await _context.SaveChangesAsync();
@@ -98,10 +90,10 @@ namespace UniversityContoso.Controllers
             return NoContent();
         }
 
-        // =====================================================
+        // ===========================
         // POST: api/studente/login
         // Login tramite Email + Password
-        // =====================================================
+        // ===========================
         [HttpPost("login")]
         public async Task<ActionResult<Studente>> Login([FromBody] LoginRequest login)
         {
@@ -113,53 +105,12 @@ namespace UniversityContoso.Controllers
 
             return studente;
         }
-
-        // =====================================================
-        // POST: api/studente/{studenteId}/enroll/{corsoId}
-        // Iscrive lo studente al corso (crea un Enrollment)
-        // =====================================================
-        [HttpPost("{studenteId}/enroll/{corsoId}")]
-        public async Task<IActionResult> EnrollStudentToCourse(int studenteId, int corsoId)
-        {
-            // 1) Verifica che lo studente esista
-            var studente = await _context.Studenti.FindAsync(studenteId);
-            if (studente == null)
-                return NotFound($"Studente con ID {studenteId} non trovato.");
-
-            // 2) Verifica che il corso esista
-            var corso = await _context.Corsi.FindAsync(corsoId);
-            if (corso == null)
-                return NotFound($"Corso con ID {corsoId} non trovato.");
-
-            // 3) Verifica che l'enrollment non esista già (evitiamo duplicati)
-            var already = await _context.Enrollments
-                .AnyAsync(e => e.StudenteID == studenteId && e.CorsoID == corsoId);
-            if (already)
-                return Conflict("Lo studente è già iscritto a questo corso.");
-
-            // 4) Crea l'enrollment e salva
-            var enrollment = new Enrollment
-            {
-                StudenteID = studenteId,
-                CorsoID = corsoId
-               
-            };
-
-            _context.Enrollments.Add(enrollment);
-            await _context.SaveChangesAsync();
-
-            // 5) Ritorna 201 Created con l'enrollment
-            return CreatedAtAction("GetById", "Enrollment", new { id = enrollment.EnrollmentID }, enrollment);
-        }
-
     }
 
-    // DTO per la richiesta di login
-    public class LoginRequest
+    // DTO per login
+    public class LoginRequestStudente
     {
         public string Email { get; set; } = string.Empty;
         public string Password { get; set; } = string.Empty;
     }
-
-
 }

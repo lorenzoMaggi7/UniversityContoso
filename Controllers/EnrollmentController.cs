@@ -5,8 +5,8 @@ using UniversityContoso.Model;
 
 namespace UniversityContoso.Controllers
 {
-    [ApiController]
     [Route("api/[controller]")]
+    [ApiController]
     public class EnrollmentController : ControllerBase
     {
         private readonly UniversityContext _context;
@@ -16,89 +16,76 @@ namespace UniversityContoso.Controllers
             _context = context;
         }
 
-        // ----------------------------------------------------------
-        // GET: api/Enrollment
-        // Restituisce TUTTI gli Enrollment presenti nel database.
-        // Include anche i dati correlati di Studente e Corso.
-        // ----------------------------------------------------------
+        // ===========================
+        // GET: api/enrollment
+        // Lista tutti gli enrollment
+        // ===========================
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Enrollment>>> GetAll()
         {
             return await _context.Enrollments
-                .Include(e => e.Studente) // Include i dati dello studente
-                .Include(e => e.Corso)    // Include i dati del corso
-                .AsNoTracking()           // Query più performante in sola lettura
+                .Include(e => e.Studente)
+                .Include(e => e.Corso)
+                .AsNoTracking()
                 .ToListAsync();
         }
 
-        // ----------------------------------------------------------
-        // GET: api/Enrollment/{id}
-        // Restituisce un singolo Enrollment cercato per ID.
-        // Se non esiste restituisce 404 NotFound.
-        // Include anche i dati correlati di Studente e Corso.
-        // ----------------------------------------------------------
+        // ===========================
+        // GET: api/enrollment/{id}
+        // Ritorna un enrollment specifico
+        // ===========================
         [HttpGet("{id}")]
         public async Task<ActionResult<Enrollment>> GetById(int id)
         {
-            var e = await _context.Enrollments
-                .Include(x => x.Studente)
-                .Include(x => x.Corso)
-                .FirstOrDefaultAsync(x => x.EnrollmentID == id);
+            var enrollment = await _context.Enrollments
+                .Include(e => e.Studente)
+                .Include(e => e.Corso)
+                .FirstOrDefaultAsync(e => e.EnrollmentID == id);
 
-            if (e == null) return NotFound(); // Nessun enrollment trovato
-
-            return e;
+            if (enrollment == null) return NotFound();
+            return enrollment;
         }
 
-        // ----------------------------------------------------------
-        // POST: api/Enrollment
-        // Crea un nuovo Enrollment nel database.
-        // Restituisce 201 Created e l’oggetto appena inserito.
-        // ----------------------------------------------------------
+        // ===========================
+        // POST: api/enrollment
+        // Iscrive uno studente a un corso esistente
+        // ===========================
         [HttpPost]
-        public async Task<ActionResult<Enrollment>> Create(Enrollment e)
+        public async Task<ActionResult<Enrollment>> CreateEnrollment(Enrollment enrollment)
         {
-            _context.Enrollments.Add(e);  // Aggiunge l’oggetto al tracking EF
-            await _context.SaveChangesAsync(); // Salva nel database
+            // Controlla studente
+            var studente = await _context.Studenti.FindAsync(enrollment.StudenteID);
+            if (studente == null) return BadRequest("Studente inesistente.");
 
-            return CreatedAtAction(nameof(GetById),
-                new { id = e.EnrollmentID }, e);
-        }
+            // Controlla corso
+            var corso = await _context.Corsi.FindAsync(enrollment.CorsoID);
+            if (corso == null) return BadRequest("Corso inesistente.");
 
-        // ----------------------------------------------------------
-        // PUT: api/Enrollment/{id}
-        // Aggiorna un Enrollment esistente.
-        // Se l’ID passato NON corrisponde, restituisce 400 BadRequest.
-        // Restituisce 204 NoContent se l’update va a buon fine.
-        // ----------------------------------------------------------
-        [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, Enrollment e)
-        {
-            if (id != e.EnrollmentID) return BadRequest();
+            // Controlla che lo studente non sia già iscritto
+            var esistente = await _context.Enrollments
+                .AnyAsync(e => e.StudenteID == enrollment.StudenteID && e.CorsoID == enrollment.CorsoID);
+            if (esistente) return BadRequest("Studente già iscritto a questo corso.");
 
-            _context.Entry(e).State = EntityState.Modified; // Segna come modificato
+            _context.Enrollments.Add(enrollment);
             await _context.SaveChangesAsync();
 
-            return NoContent(); // Aggiornamento riuscito
+            return CreatedAtAction(nameof(GetById), new { id = enrollment.EnrollmentID }, enrollment);
         }
 
-        // ----------------------------------------------------------
-        // DELETE: api/Enrollment/{id}
-        // Elimina un Enrollment dal database.
-        // Se non esiste restituisce 404.
-        // Se eliminato correttamente, restituisce 204 NoContent.
-        // ----------------------------------------------------------
+        // ===========================
+        // DELETE: api/enrollment/{id}
+        // Rimuove un enrollment
+        // ===========================
         [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(int id)
+        public async Task<IActionResult> DeleteEnrollment(int id)
         {
-            var e = await _context.Enrollments.FindAsync(id);
+            var enrollment = await _context.Enrollments.FindAsync(id);
+            if (enrollment == null) return NotFound();
 
-            if (e == null) return NotFound(); // Non trovato
-
-            _context.Enrollments.Remove(e); // Elimino l’entità
+            _context.Enrollments.Remove(enrollment);
             await _context.SaveChangesAsync();
 
-            return NoContent(); // Eliminazione avvenuta
+            return NoContent();
         }
     }
 }

@@ -5,89 +5,134 @@ using UniversityContoso.Model;
 
 namespace UniversityContoso.Controllers
 {
-    // Indica che il controller risponde come API REST
     [ApiController]
-
-    // Imposta il percorso base dell'API:
-    // es: api/Professore
     [Route("api/[controller]")]
     public class ProfessoreController : ControllerBase
     {
-        // Il DbContext che permette di accedere al database
         private readonly UniversityContext _context;
 
-        // Il costruttore riceve il contesto tramite Dependency Injection
         public ProfessoreController(UniversityContext context)
         {
             _context = context;
         }
 
-        // GET: api/Professore
-        // ➜ Ritorna la lista di tutti i professori
+        // ---------------------------------------------------------------
+        // GET: api/professore
+        // Ritorna tutti i professori
+        // ---------------------------------------------------------------
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Professori>>> GetAll()
         {
-            // AsNoTracking() migliora le performance per letture senza tracking
             return await _context.Professori.AsNoTracking().ToListAsync();
         }
 
-        // GET: api/Professore/5
-        // ➜ Ritorna un singolo professore cercato tramite ID
+        // ---------------------------------------------------------------
+        // GET: api/professore/{id}
+        // Ritorna un professore specifico
+        // ---------------------------------------------------------------
         [HttpGet("{id}")]
         public async Task<ActionResult<Professori>> GetById(int id)
         {
             var p = await _context.Professori.FindAsync(id);
-
-            // Se non trovato → HTTP 404
             if (p == null) return NotFound();
-
             return p;
         }
 
-        // POST: api/Professore
-        // ➜ Crea un nuovo professore nel database
+        // ---------------------------------------------------------------
+        // POST: api/professore
+        // Crea un nuovo professore (Email e Password incluse)
+        // ---------------------------------------------------------------
         [HttpPost]
         public async Task<ActionResult<Professori>> Create(Professori p)
         {
-            _context.Professori.Add(p);   // Aggiunge l’oggetto al DbSet
-            await _context.SaveChangesAsync();  // Salva le modifiche
-
-            // Ritorna HTTP 201 + link alla nuova risorsa creata
+            _context.Professori.Add(p);
+            await _context.SaveChangesAsync();
             return CreatedAtAction(nameof(GetById), new { id = p.ProfessoriID }, p);
         }
 
-        // PUT: api/Professore/5
-        // ➜ Aggiorna i dati di un professore esistente
+        // ---------------------------------------------------------------
+        // PUT: api/professore/{id}
+        // Aggiorna un professore
+        // ---------------------------------------------------------------
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, Professori p)
         {
-            // Controllo di coerenza: l’ID nel body deve combaciare con l’URL
             if (id != p.ProfessoriID) return BadRequest();
 
-            // Notifica a EF Core che l'entità va aggiornata
             _context.Entry(p).State = EntityState.Modified;
-
             await _context.SaveChangesAsync();
-
-            // Nessun contenuto da ritornare → HTTP 204
             return NoContent();
         }
 
-        // DELETE: api/Professore/5
-        // ➜ Elimina un professore tramite ID
+        // ---------------------------------------------------------------
+        // DELETE: api/professore/{id}
+        // Elimina un professore
+        // ---------------------------------------------------------------
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
             var p = await _context.Professori.FindAsync(id);
-
-            // Se non esiste → HTTP 404
             if (p == null) return NotFound();
 
-            _context.Professori.Remove(p); // Rimuove dal database
+            _context.Professori.Remove(p);
             await _context.SaveChangesAsync();
-
-            // Ritorna HTTP 204 (successo senza contenuto)
             return NoContent();
         }
+
+        // ---------------------------------------------------------------
+        // POST: api/professore/login
+        // Login tramite Email + Password
+        // ---------------------------------------------------------------
+        [HttpPost("login")]
+        public async Task<ActionResult<Professori>> Login([FromBody] LoginRequest login)
+        {
+            var prof = await _context.Professori
+                .FirstOrDefaultAsync(p => p.Email == login.Email && p.Password == login.Password);
+
+            if (prof == null)
+                return Unauthorized("Email o password errati.");
+
+            return prof;
+        }
+
+        // ================================================================
+        // POST: api/professore/IscrivitiCorso
+        // Permette al professore di iscriversi a un corso
+        // ================================================================
+        [HttpPost("IscrivitiCorso")]
+        public async Task<IActionResult> IscrivitiACorso([FromBody] IscrizioneCorsoRequest request)
+        {
+            // Controlla che il professore esista
+            var prof = await _context.Professori.FindAsync(request.ProfessoreID);
+            if (prof == null) return NotFound("Professore non trovato.");
+
+            // Controlla che il corso esista
+            var corso = await _context.Corsi.FindAsync(request.CorsoID);
+            if (corso == null) return NotFound("Corso non trovato.");
+
+            // Controlla che il corso non abbia già un professore
+            if (corso.ProfessoriID != null)
+                return BadRequest("Il corso ha già un professore assegnato.");
+
+            // Assegna il professore al corso
+            corso.ProfessoriID = prof.ProfessoriID;
+            await _context.SaveChangesAsync();
+
+            return Ok(corso);
+        }
+    }
+
+    // DTO per il login
+    public class LoginRequest
+    {
+        public string Email { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
+    }
+
+    // DTO per iscrizione corso
+    public class IscrizioneCorsoRequest
+    {
+        public int ProfessoreID { get; set; }
+        public int CorsoID { get; set; }
     }
 }
