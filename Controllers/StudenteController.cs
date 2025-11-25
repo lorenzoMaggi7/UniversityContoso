@@ -142,14 +142,13 @@ namespace UniversityContoso.Controllers
             {
                 StudenteID = studenteId,
                 CorsoID = corsoId
-                // se in futuro aggiungi altri campi (es. DateIscrizione), impostali qui
+               
             };
 
             _context.Enrollments.Add(enrollment);
             await _context.SaveChangesAsync();
 
             // 5) Ritorna 201 Created con l'enrollment
-            // Nota: "Enrollment" è il nome del controller con il GetById (assumendo sia "EnrollmentController")
             return CreatedAtAction("GetById", "Enrollment", new { id = enrollment.EnrollmentID }, enrollment);
         }
 
