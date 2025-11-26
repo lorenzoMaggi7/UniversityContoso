@@ -7,6 +7,7 @@ namespace UniversityContoso.Model
         public int CorsoID { get; set; }
         public string? Titolo { get; set; }
         public int? Crediti { get; set; }
+        public string? Descrizione { get; set; }
         [JsonIgnore]
         public int? ProfessoriID { get; set; }
         [JsonIgnore] // Ignora la proprietà navigazionale in Swagger

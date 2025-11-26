@@ -48,11 +48,12 @@ namespace UniversityContoso.Controllers
 
         // ---------------------------------------------------------------
         // POST: api/Corso
-        // Crea un nuovo corso (Crediti + ProfessoreID opzionali).
+        // Crea un nuovo corso (Crediti, ProfessoreID e Descrizione opzionali).
         // ---------------------------------------------------------------
         [HttpPost]
         public async Task<ActionResult<Corso>> Create(Corso c)
         {
+            // Il campo Descrizione è opzionale, quindi non serve alcuna validazione speciale
             _context.Corsi.Add(c);
             await _context.SaveChangesAsync();
 
@@ -61,7 +62,7 @@ namespace UniversityContoso.Controllers
 
         // ---------------------------------------------------------------
         // PUT: api/Corso/{id}
-        // Aggiorna un corso esistente.
+        // Aggiorna un corso esistente, inclusa la nuova Descrizione.
         // ---------------------------------------------------------------
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, Corso c)
@@ -69,7 +70,16 @@ namespace UniversityContoso.Controllers
             if (id != c.CorsoID)
                 return BadRequest();
 
-            _context.Entry(c).State = EntityState.Modified;
+            var corsoEsistente = await _context.Corsi.FindAsync(id);
+            if (corsoEsistente == null)
+                return NotFound();
+
+            // Aggiorno manualmente solo i campi modificabili
+            corsoEsistente.Titolo = c.Titolo;
+            corsoEsistente.Crediti = c.Crediti;
+            corsoEsistente.ProfessoriID = c.ProfessoriID;
+            corsoEsistente.Descrizione = c.Descrizione; 
+
             await _context.SaveChangesAsync();
 
             return NoContent();
