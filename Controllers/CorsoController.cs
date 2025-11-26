@@ -48,12 +48,11 @@ namespace UniversityContoso.Controllers
 
         // ---------------------------------------------------------------
         // POST: api/Corso
-        // Crea un nuovo corso (Crediti, ProfessoreID e Descrizione opzionali).
+        // Crea un nuovo corso (campi opzionali: Crediti, ProfessoreID, Descrizione, DurataMesi, PostiDisponibili)
         // ---------------------------------------------------------------
         [HttpPost]
         public async Task<ActionResult<Corso>> Create(Corso c)
         {
-            // Il campo Descrizione è opzionale, quindi non serve alcuna validazione speciale
             _context.Corsi.Add(c);
             await _context.SaveChangesAsync();
 
@@ -62,7 +61,7 @@ namespace UniversityContoso.Controllers
 
         // ---------------------------------------------------------------
         // PUT: api/Corso/{id}
-        // Aggiorna un corso esistente, inclusa la nuova Descrizione.
+        // Aggiorna un corso esistente con tutti i nuovi campi
         // ---------------------------------------------------------------
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, Corso c)
@@ -74,11 +73,13 @@ namespace UniversityContoso.Controllers
             if (corsoEsistente == null)
                 return NotFound();
 
-            // Aggiorno manualmente solo i campi modificabili
+            // Aggiorno i campi modificabili
             corsoEsistente.Titolo = c.Titolo;
             corsoEsistente.Crediti = c.Crediti;
             corsoEsistente.ProfessoriID = c.ProfessoriID;
-            corsoEsistente.Descrizione = c.Descrizione; 
+            corsoEsistente.Descrizione = c.Descrizione;
+            corsoEsistente.DurataMesi = c.DurataMesi;
+            corsoEsistente.PostiDisponibili = c.PostiDisponibili;
 
             await _context.SaveChangesAsync();
 
@@ -87,7 +88,7 @@ namespace UniversityContoso.Controllers
 
         // ---------------------------------------------------------------
         // DELETE: api/Corso/{id}
-        // Rimuove un corso.
+        // Elimina un corso esistente
         // ---------------------------------------------------------------
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
