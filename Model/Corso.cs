@@ -8,8 +8,8 @@ namespace UniversityContoso.Model
         public string? Titolo { get; set; }
         public int? Crediti { get; set; }
         public string? Descrizione { get; set; }
-        public int PostiDisponibili { get; set; }
-        public int DurataMesi { get; set; }
+        public int? PostiDisponibili { get; set; }
+        public int? DurataMesi { get; set; }
         [JsonIgnore]
         public int? ProfessoriID { get; set; }
         [JsonIgnore] // Ignora la proprietà navigazionale in Swagger
